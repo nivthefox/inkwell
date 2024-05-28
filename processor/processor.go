@@ -69,7 +69,7 @@ func ProcessChapter(config config.ChapterConfig, separator string, book *BookSum
 
 	for idx, scene := range config.Scenes {
 		if idx > 0 {
-			builder.WriteString("\n" + separator + "\n")
+			builder.WriteString("\n\n<center>" + separator + "</center>\n\n")
 		}
 
 		sceneBuilder, err := ProcessScene(scene, &summary)

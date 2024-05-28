@@ -50,7 +50,7 @@ func NewInkwellConfig(filename string) (*InkwellConfig, error) {
 	}
 
 	if config.SceneSeparator == "" {
-		config.SceneSeparator = "-----"
+		config.SceneSeparator = "*&#9;*&#9;*"
 	}
 
 	return &config, nil
