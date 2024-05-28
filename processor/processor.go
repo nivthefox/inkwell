@@ -45,11 +45,11 @@ func ProcessBook(config config.InkwellConfig) error {
 // of the files in each scene.
 func ProcessChapter(config config.ChapterConfig, separator string) (*strings.Builder, error) {
 	builder := &strings.Builder{}
-	builder.WriteString("## " + config.Title + "\n")
+	builder.WriteString("\n## " + config.Title + "\n")
 
-	for int, scene := range config.Scenes {
-		if int > 0 {
-			builder.WriteString(separator)
+	for idx, scene := range config.Scenes {
+		if idx > 0 {
+			builder.WriteString("\n" + separator + "\n")
 		}
 
 		sceneBuilder, err := ProcessScene(scene)
