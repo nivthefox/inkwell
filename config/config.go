@@ -10,8 +10,10 @@ type OutputFilename string
 
 // InkwellConfig is a struct that represents the configuration of the book
 type InkwellConfig struct {
-	Title              string `yaml:"title"`
-	Author             string `yaml:"author"`
+	Title   string   `yaml:"title"`
+	Summary string   `yaml:"summary"`
+	Authors []string `yaml:"authors"`
+
 	DedicationFilename string `yaml:"dedication"`
 	SceneSeparator     string `yaml:"scene_separator"`
 	Chapters           []ChapterConfig
