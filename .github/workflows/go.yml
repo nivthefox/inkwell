@@ -19,9 +19,9 @@ jobs:
       - name: Install dependencies
         run: go get .
       - name: Build
-        run: go build -v ./...
+        run: go build -o inkwell
       - name: Upload
         uses: actions/upload-artifact@master
         with:
-          name: inkwell
+          name: inkwell-${{ matrix.go-version }}
           path: inkwell
