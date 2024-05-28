@@ -23,10 +23,11 @@ func ProcessBook(config config.InkwellConfig) error {
 	}
 
 	for _, chapter := range config.Chapters {
-		_, err := ProcessChapter(chapter, config.SceneSeparator)
+		chapter, err := ProcessChapter(chapter, config.SceneSeparator)
 		if err != nil {
 			return err
 		}
+		builder.WriteString(chapter.String())
 	}
 
 	if config.OutputFilename != "" {
@@ -44,7 +45,7 @@ func ProcessBook(config config.InkwellConfig) error {
 // of the files in each scene.
 func ProcessChapter(config config.ChapterConfig, separator string) (*strings.Builder, error) {
 	builder := &strings.Builder{}
-	builder.WriteString("## " + config.Title + "\n\n")
+	builder.WriteString("## " + config.Title + "\n")
 
 	for int, scene := range config.Scenes {
 		if int > 0 {
@@ -75,7 +76,7 @@ func ProcessScene(config config.SceneConfig) (*strings.Builder, error) {
 	builder := &strings.Builder{}
 	for int, path := range config.Files {
 		if int > 0 {
-			builder.WriteString("\n\n")
+			builder.WriteString("\n")
 		}
 
 		file, err := os.Open(path)
@@ -113,7 +114,7 @@ func createDedication(filename string, builder *strings.Builder) error {
 	}
 	defer file.Close()
 
-	builder.WriteString("## Dedication\n\n")
+	builder.WriteString("## Dedication\n")
 
 	// Read the contents of the file
 	_, err = io.Copy(builder, file)
@@ -121,14 +122,14 @@ func createDedication(filename string, builder *strings.Builder) error {
 		return err
 	}
 
-	builder.WriteString("\n\n")
+	builder.WriteString("\n")
 	return nil
 }
 
 // createTitlePage writes the title and author of the book to the builder.
 func createTitlePage(title, author string, builder *strings.Builder) error {
-	builder.WriteString("# " + title + "\n\n")
-	builder.WriteString("- By " + author + "\n\n")
+	builder.WriteString("# " + title + "\n")
+	builder.WriteString("- By " + author + "\n")
 	return nil
 }
 
