@@ -16,6 +16,7 @@ type InkwellConfig struct {
 	SceneSeparator     string `yaml:"scene_separator"`
 	Chapters           []ChapterConfig
 	OutputFilename     OutputFilename `yaml:"output_filename,omitempty"`
+	SummaryFilename    OutputFilename `yaml:"summary_filename,omitempty"`
 }
 
 // ChapterConfig is a struct that represents the configuration of a chapter

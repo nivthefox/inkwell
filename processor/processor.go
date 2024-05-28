@@ -12,6 +12,8 @@ import (
 // of the files in each scene.
 func ProcessBook(config config.InkwellConfig) error {
 	builder := &strings.Builder{}
+	summary := BookSummary{}
+
 	tperr := createTitlePage(config.Title, config.Author, builder)
 	if tperr != nil {
 		return tperr
@@ -23,18 +25,30 @@ func ProcessBook(config config.InkwellConfig) error {
 	}
 
 	for _, chapter := range config.Chapters {
-		chapter, err := ProcessChapter(chapter, config.SceneSeparator)
+		text, err := ProcessChapter(chapter, config.SceneSeparator, &summary)
 		if err != nil {
 			return err
 		}
-		builder.WriteString(chapter.String())
+		builder.WriteString(text.String())
 	}
 
 	if config.OutputFilename != "" {
-		err := writeToFile(builder, config.OutputFilename)
-		if err != nil {
-			return err
+		ferr := writeToFile(builder.String(), config.OutputFilename)
+		if ferr != nil {
+			return ferr
 		}
+	}
+
+	if config.SummaryFilename != "" {
+		sum, serr := summary.String()
+		if serr != nil {
+			return serr
+		}
+		ferr := writeToFile(sum, config.SummaryFilename)
+		if ferr != nil {
+			return ferr
+		}
+
 	}
 
 	return nil
@@ -43,16 +57,19 @@ func ProcessBook(config config.InkwellConfig) error {
 // ProcessChapter iterates over each of the scenes in the chapter in the config
 // and builds the appropriate output files by concatenating the contents
 // of the files in each scene.
-func ProcessChapter(config config.ChapterConfig, separator string) (*strings.Builder, error) {
+func ProcessChapter(config config.ChapterConfig, separator string, book *BookSummary) (*strings.Builder, error) {
 	builder := &strings.Builder{}
 	builder.WriteString("\n## " + config.Title + "\n")
+	summary := ChapterSummary{
+		Title: config.Title,
+	}
 
 	for idx, scene := range config.Scenes {
 		if idx > 0 {
 			builder.WriteString("\n" + separator + "\n")
 		}
 
-		sceneBuilder, err := ProcessScene(scene)
+		sceneBuilder, err := ProcessScene(scene, &summary)
 		if err != nil {
 			return nil, err
 		}
@@ -61,22 +78,26 @@ func ProcessChapter(config config.ChapterConfig, separator string) (*strings.Bui
 	}
 
 	if config.OutputFilename != "" {
-		err := writeToFile(builder, config.OutputFilename)
+		err := writeToFile(builder.String(), config.OutputFilename)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	book.AddChapterSummary(summary)
 	return builder, nil
 }
 
 // ProcessScene concatenates the contents of the files in the scene in the config
 // and writes the output to the appropriate output file.
-func ProcessScene(config config.SceneConfig) (*strings.Builder, error) {
-	builder := &strings.Builder{}
-	for int, path := range config.Files {
-		if int > 0 {
-			builder.WriteString("\n")
+func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.Builder, error) {
+	scene := &strings.Builder{}
+	summary := SceneSummary{}
+
+	for idx, path := range config.Files {
+		builder := &strings.Builder{}
+		if idx > 0 {
+			scene.WriteString("\n")
 		}
 
 		file, err := os.Open(path)
@@ -90,16 +111,23 @@ func ProcessScene(config config.SceneConfig) (*strings.Builder, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		summary.AddCharacters(len(builder.String()))
+		summary.AddWords(len(strings.Fields(builder.String())))
+		summary.AddFile()
+
+		scene.WriteString(builder.String())
 	}
 
 	if config.OutputFilename != "" {
-		err := writeToFile(builder, config.OutputFilename)
+		err := writeToFile(scene.String(), config.OutputFilename)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return builder, nil
+	chapter.AddSceneSummary(summary)
+	return scene, nil
 }
 
 // createDedication reads the contents of the dedication file and writes it to the builder.
@@ -134,13 +162,13 @@ func createTitlePage(title, author string, builder *strings.Builder) error {
 }
 
 // writeToFile writes the contents of the strings.Builder to a file with the given filename.
-func writeToFile(builder *strings.Builder, filename config.OutputFilename) error {
+func writeToFile(output string, filename config.OutputFilename) error {
 	file, err := os.Create(string(filename))
 	if err != nil {
 		return err
 	}
 
-	_, err = file.WriteString(builder.String())
+	_, err = file.WriteString(output)
 	if err != nil {
 		return err
 	}
