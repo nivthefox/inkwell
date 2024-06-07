@@ -4,10 +4,13 @@ import (
 	"github.com/nivthefox/inkwell/config"
 	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var spaces = regexp.MustCompile(`\s+`)
 
 // ProcessBook iterates over each of the files in every scene in the config
 // and builds the appropriate output files by concatenating the contents
@@ -117,6 +120,7 @@ func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.
 
 		// Trim extra newlines
 		content := strings.TrimSpace(builder.String())
+		content = spaces.ReplaceAllString(content, " ")
 
 		summary.AddCharacters(len(content))
 		summary.AddWords(len(strings.Fields(content)))
