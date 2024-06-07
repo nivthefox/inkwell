@@ -18,6 +18,7 @@ type InkwellConfig struct {
 	SceneSeparator     string `yaml:"scene_separator"`
 	Chapters           []ChapterConfig
 	OutputFilename     OutputFilename `yaml:"output_filename,omitempty"`
+	OutputNumbers      bool           `yaml:"number_paragraphs,omitempty"`
 	SummaryFilename    OutputFilename `yaml:"summary_filename,omitempty"`
 }
 
@@ -26,12 +27,14 @@ type ChapterConfig struct {
 	Title          string `yaml:"title"`
 	Scenes         []SceneConfig
 	OutputFilename OutputFilename `yaml:"output_filename,omitempty"`
+	OutputNumbers  bool           `yaml:"number_paragraphs,omitempty"`
 }
 
 // SceneConfig is a struct that represents the configuration of a scene
 type SceneConfig struct {
 	Files          []string       `yaml:"files"`
 	OutputFilename OutputFilename `yaml:"output_filename,omitempty"`
+	OutputNumbers  bool           `yaml:"number_paragraphs,omitempty"`
 }
 
 // NewInkwellConfig reads the configuration from a file and returns an InkwellConfig

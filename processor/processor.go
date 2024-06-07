@@ -4,6 +4,7 @@ import (
 	"github.com/nivthefox/inkwell/config"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,11 +33,11 @@ func ProcessBook(config config.InkwellConfig) error {
 		if err != nil {
 			return err
 		}
-		builder.WriteString(text.String())
+		builder.WriteString("\n" + text.String())
 	}
 
 	if config.OutputFilename != "" {
-		ferr := writeToFile(builder.String(), config.OutputFilename)
+		ferr := writeToFile(builder.String(), config.OutputNumbers, config.OutputFilename)
 		if ferr != nil {
 			return ferr
 		}
@@ -47,11 +48,10 @@ func ProcessBook(config config.InkwellConfig) error {
 		if serr != nil {
 			return serr
 		}
-		ferr := writeToFile(sum, config.SummaryFilename)
+		ferr := writeToFile(sum, false, config.SummaryFilename)
 		if ferr != nil {
 			return ferr
 		}
-
 	}
 
 	return nil
@@ -62,7 +62,7 @@ func ProcessBook(config config.InkwellConfig) error {
 // of the files in each scene.
 func ProcessChapter(config config.ChapterConfig, separator string, book *BookSummary) (*strings.Builder, error) {
 	builder := &strings.Builder{}
-	builder.WriteString("\n## " + config.Title + "\n")
+	builder.WriteString("## " + config.Title + "\n")
 	summary := ChapterSummary{
 		Title: config.Title,
 	}
@@ -81,7 +81,7 @@ func ProcessChapter(config config.ChapterConfig, separator string, book *BookSum
 	}
 
 	if config.OutputFilename != "" {
-		err := writeToFile(builder.String(), config.OutputFilename)
+		err := writeToFile(builder.String(), config.OutputNumbers, config.OutputFilename)
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +126,7 @@ func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.
 	}
 
 	if config.OutputFilename != "" {
-		err := writeToFile(scene.String(), config.OutputFilename)
+		err := writeToFile(scene.String(), config.OutputNumbers, config.OutputFilename)
 		if err != nil {
 			return nil, err
 		}
@@ -186,10 +186,32 @@ func createTitlePage(title string, authors []string, builder *strings.Builder) e
 }
 
 // writeToFile writes the contents of the strings.Builder to a file with the given filename.
-func writeToFile(output string, filename config.OutputFilename) error {
+func writeToFile(output string, numbers bool, filename config.OutputFilename) error {
+	// trim windows line endings
+	output = strings.ReplaceAll(output, "\r\n", "\n")
+
 	file, err := os.Create(string(filename))
 	if err != nil {
 		return err
+	}
+
+	if numbers {
+		o := strings.Split(output, "\n")
+		no := 1
+		inMeta := false
+		for idx, line := range o {
+			if strings.HasPrefix(line, "---") {
+				inMeta = !inMeta
+			}
+
+			if line == "" || line == "\n" || line == "\r" || strings.HasPrefix(line, "#") || inMeta || line == "\\* \\* \\*" {
+				continue
+			}
+
+			o[idx] = line + " <" + strconv.Itoa(no) + ">"
+			no += 1
+		}
+		output = strings.TrimSpace(strings.Join(o, "\n"))
 	}
 
 	_, err = file.WriteString(output)
