@@ -69,7 +69,7 @@ func ProcessChapter(config config.ChapterConfig, separator string, book *BookSum
 
 	for idx, scene := range config.Scenes {
 		if idx > 0 {
-			builder.WriteString("\n\n<center>" + separator + "</center>\n\n")
+			builder.WriteString("\n\\* \\* \\*\n\n")
 		}
 
 		sceneBuilder, err := ProcessScene(scene, &summary)
@@ -107,19 +107,22 @@ func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
 
 		// Read the contents of the file
 		_, err = io.Copy(builder, file)
 		if err != nil {
 			return nil, err
 		}
+		_ = file.Close()
 
-		summary.AddCharacters(len(builder.String()))
-		summary.AddWords(len(strings.Fields(builder.String())))
+		// Trim extra newlines
+		content := strings.TrimSpace(builder.String())
+
+		summary.AddCharacters(len(content))
+		summary.AddWords(len(strings.Fields(content)))
 		summary.AddFile()
 
-		scene.WriteString(builder.String())
+		scene.WriteString(content + "\n")
 	}
 
 	if config.OutputFilename != "" {
