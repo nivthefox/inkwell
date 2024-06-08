@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var spaces = regexp.MustCompile(`\s+`)
+var spaces = regexp.MustCompile(`[ \t]+`)
 
 // ProcessBook iterates over each of the files in every scene in the config
 // and builds the appropriate output files by concatenating the contents
