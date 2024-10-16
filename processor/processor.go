@@ -21,14 +21,23 @@ func ProcessBook(config config.InkwellConfig) error {
 
 	createMetadata(config, builder)
 
-	tperr := createTitlePage(config.Title, config.Authors, builder)
-	if tperr != nil {
-		return tperr
+	if config.Title != "" {
+		tperr := createTitlePage(config.Title, config.Authors, builder)
+		if tperr != nil {
+			return tperr
+		}
 	}
 
 	derr := createDedication(config.DedicationFilename, builder)
 	if derr != nil {
 		return derr
+	}
+
+	for _, section := range config.Sections {
+		_, secerr := ProcessSection(section)
+		if secerr != nil {
+			return secerr
+		}
 	}
 
 	for _, chapter := range config.Chapters {
@@ -138,6 +147,47 @@ func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.
 
 	chapter.AddSceneSummary(summary)
 	return scene, nil
+}
+
+// ProcessSection concatenates the contents of the files in the section in the config
+// and writes the output to the appropriate output file.
+func ProcessSection(config config.SectionConfig) (*strings.Builder, error) {
+	section := &strings.Builder{}
+	section.WriteString("# " + config.Title + "\n")
+
+	for idx, path := range config.Files {
+		builder := &strings.Builder{}
+		if idx > 0 {
+			section.WriteString("\n")
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+
+		// Read the contents of the file
+		_, err = io.Copy(builder, file)
+		if err != nil {
+			return nil, err
+		}
+		_ = file.Close()
+
+		// Trim extra newlines
+		content := strings.TrimSpace(builder.String())
+		content = spaces.ReplaceAllString(content, " ")
+
+		section.WriteString(content + "\n")
+	}
+
+	if config.OutputFilename != "" {
+		err := writeToFile(section.String(), config.OutputNumbers, config.OutputFilename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return section, nil
 }
 
 // createDedication reads the contents of the dedication file and writes it to the builder.

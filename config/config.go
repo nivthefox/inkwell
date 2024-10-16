@@ -14,12 +14,21 @@ type InkwellConfig struct {
 	Summary string   `yaml:"summary"`
 	Authors []string `yaml:"authors"`
 
-	DedicationFilename string `yaml:"dedication"`
-	SceneSeparator     string `yaml:"scene_separator"`
-	Chapters           []ChapterConfig
-	OutputFilename     OutputFilename `yaml:"output_filename,omitempty"`
-	OutputNumbers      bool           `yaml:"number_paragraphs,omitempty"`
-	SummaryFilename    OutputFilename `yaml:"summary_filename,omitempty"`
+	DedicationFilename string          `yaml:"dedication"`
+	SceneSeparator     string          `yaml:"scene_separator"`
+	Sections           []SectionConfig `yaml:"sections"`
+	Chapters           []ChapterConfig `yaml:"chapters"`
+	OutputFilename     OutputFilename  `yaml:"output_filename,omitempty"`
+	OutputNumbers      bool            `yaml:"number_paragraphs,omitempty"`
+	SummaryFilename    OutputFilename  `yaml:"summary_filename,omitempty"`
+}
+
+// SectionConfig is a struct that represents the configuration of a section
+type SectionConfig struct {
+	Title          string         `yaml:"title"`
+	Files          []string       `yaml:"files"`
+	OutputFilename OutputFilename `yaml:"output_filename,omitempty"`
+	OutputNumbers  bool           `yaml:"number_paragraphs,omitempty"`
 }
 
 // ChapterConfig is a struct that represents the configuration of a chapter
