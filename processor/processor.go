@@ -1,13 +1,14 @@
 package processor
 
 import (
-	"github.com/nivthefox/inkwell/config"
 	"io"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/nivthefox/inkwell/config"
 )
 
 var spaces = regexp.MustCompile(`[ \t]+`)
@@ -253,17 +254,45 @@ func writeToFile(output string, numbers bool, filename config.OutputFilename) er
 		o := strings.Split(output, "\n")
 		no := 1
 		inMeta := false
-		for idx, line := range o {
-			if strings.HasPrefix(line, "---") {
-				inMeta = !inMeta
-			}
+		inBlockquote := false
 
-			if line == "" || line == "\n" || line == "\r" || strings.HasPrefix(line, "#") || inMeta || line == "\\* \\* \\*" {
+		for idx, line := range o {
+			trimmedLine := strings.TrimSpace(line)
+
+			// Handle metadata section
+			if trimmedLine == "---" {
+				inMeta = !inMeta
+				continue
+			}
+			if inMeta {
 				continue
 			}
 
-			o[idx] = line + " <" + strconv.Itoa(no) + ">"
-			no += 1
+			// Skip empty lines, headers, and scene separators
+			if trimmedLine == "" ||
+				strings.HasPrefix(trimmedLine, "#") ||
+				trimmedLine == "\\* \\* \\*" ||
+				strings.HasPrefix(trimmedLine, "-") {
+				continue
+			}
+
+			// Handle blockquotes
+			if strings.HasPrefix(trimmedLine, ">") {
+				inBlockquote = true
+				continue
+			}
+
+			// If we were in a blockquote and hit a non-blockquote line,
+			// mark the end of blockquote
+			if inBlockquote && !strings.HasPrefix(trimmedLine, ">") {
+				inBlockquote = false
+			}
+
+			// Only number actual paragraph lines (not in blockquote or other special elements)
+			if !inBlockquote && trimmedLine != "" {
+				o[idx] = line + " <" + strconv.Itoa(no) + ">"
+				no += 1
+			}
 		}
 		output = strings.TrimSpace(strings.Join(o, "\n"))
 	}
