@@ -265,6 +265,7 @@ func writeToFile(output string, numbers bool, filename config.OutputFilename) er
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	if numbers {
 		o := strings.Split(output, "\n")
