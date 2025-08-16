@@ -21,6 +21,7 @@ type InkwellConfig struct {
 	OutputFilename     OutputFilename  `yaml:"output_filename,omitempty"`
 	OutputNumbers      bool            `yaml:"number_paragraphs,omitempty"`
 	SummaryFilename    OutputFilename  `yaml:"summary_filename,omitempty"`
+	StripWikiLinks     bool            `yaml:"strip_wiki_links,omitempty"`
 }
 
 // SectionConfig is a struct that represents the configuration of a section

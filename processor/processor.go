@@ -12,6 +12,12 @@ import (
 )
 
 var spaces = regexp.MustCompile(`[ \t]+`)
+var wikiLinks = regexp.MustCompile(`\[\[([^\]]+)\]\]`)
+
+// processWikiLinks removes wiki-style links [[text]] and replaces them with just the text content
+func processWikiLinks(content string) string {
+	return wikiLinks.ReplaceAllString(content, "$1")
+}
 
 // ProcessBook iterates over each of the files in every scene in the config
 // and builds the appropriate output files by concatenating the contents
@@ -35,14 +41,14 @@ func ProcessBook(config config.InkwellConfig) error {
 	}
 
 	for _, section := range config.Sections {
-		_, secerr := ProcessSection(section)
+		_, secerr := ProcessSection(section, config.StripWikiLinks)
 		if secerr != nil {
 			return secerr
 		}
 	}
 
 	for _, chapter := range config.Chapters {
-		text, err := ProcessChapter(chapter, config.SceneSeparator, &summary)
+		text, err := ProcessChapter(chapter, config.SceneSeparator, config.StripWikiLinks, &summary)
 		if err != nil {
 			return err
 		}
@@ -73,7 +79,7 @@ func ProcessBook(config config.InkwellConfig) error {
 // ProcessChapter iterates over each of the scenes in the chapter in the config
 // and builds the appropriate output files by concatenating the contents
 // of the files in each scene.
-func ProcessChapter(config config.ChapterConfig, separator string, book *BookSummary) (*strings.Builder, error) {
+func ProcessChapter(config config.ChapterConfig, separator string, stripWikiLinks bool, book *BookSummary) (*strings.Builder, error) {
 	builder := &strings.Builder{}
 	builder.WriteString("## " + config.Title + "\n")
 	summary := ChapterSummary{
@@ -85,7 +91,7 @@ func ProcessChapter(config config.ChapterConfig, separator string, book *BookSum
 			builder.WriteString("\n\\* \\* \\*\n\n")
 		}
 
-		sceneBuilder, err := ProcessScene(scene, &summary)
+		sceneBuilder, err := ProcessScene(scene, stripWikiLinks, &summary)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +112,7 @@ func ProcessChapter(config config.ChapterConfig, separator string, book *BookSum
 
 // ProcessScene concatenates the contents of the files in the scene in the config
 // and writes the output to the appropriate output file.
-func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.Builder, error) {
+func ProcessScene(config config.SceneConfig, stripWikiLinks bool, chapter *ChapterSummary) (*strings.Builder, error) {
 	scene := &strings.Builder{}
 	summary := SceneSummary{}
 
@@ -131,6 +137,11 @@ func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.
 		// Trim extra newlines
 		content := strings.TrimSpace(builder.String())
 		content = spaces.ReplaceAllString(content, " ")
+		
+		// Process wiki links if enabled
+		if stripWikiLinks {
+			content = processWikiLinks(content)
+		}
 
 		summary.AddCharacters(len(content))
 		summary.AddWords(len(strings.Fields(content)))
@@ -152,7 +163,7 @@ func ProcessScene(config config.SceneConfig, chapter *ChapterSummary) (*strings.
 
 // ProcessSection concatenates the contents of the files in the section in the config
 // and writes the output to the appropriate output file.
-func ProcessSection(config config.SectionConfig) (*strings.Builder, error) {
+func ProcessSection(config config.SectionConfig, stripWikiLinks bool) (*strings.Builder, error) {
 	section := &strings.Builder{}
 	section.WriteString("# " + config.Title + "\n")
 
@@ -177,6 +188,11 @@ func ProcessSection(config config.SectionConfig) (*strings.Builder, error) {
 		// Trim extra newlines
 		content := strings.TrimSpace(builder.String())
 		content = spaces.ReplaceAllString(content, " ")
+		
+		// Process wiki links if enabled
+		if stripWikiLinks {
+			content = processWikiLinks(content)
+		}
 
 		section.WriteString(content + "\n")
 	}
